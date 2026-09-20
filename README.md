@@ -15,23 +15,12 @@ Rather than attempting to reproduce every feature in a large site builder, this 
 
 ## Screenshots
 
-Final screenshots are intentionally left as placeholders so they can be added without using generated or stock imagery.
-
-| View | What to capture | Recommended asset path |
-| --- | --- | --- |
-| Desktop workspace | Full editor with the artboard and Blocks & Studio panel visible. | `docs/screenshots/builder-desktop.png` |
-| Mobile preview | Phone artboard showing a responsive page layout. | `docs/screenshots/builder-mobile.png` |
-| Button actions | Inspector configured for an interactive button action. | `docs/screenshots/button-actions.png` |
-| Export workflow | The Export Website modal and its downloadable artifacts. | `docs/screenshots/export-workflow.png` |
-
-After placing the files at those paths, replace this placeholder with the following Markdown:
-
-```md
-![Desktop workspace](./docs/screenshots/builder-desktop.png)
-![Mobile preview](./docs/screenshots/builder-mobile.png)
-![Button action editor](./docs/screenshots/button-actions.png)
-![Export workflow](./docs/screenshots/export-workflow.png)
-```
+| Title | Screenshot |
+| Dektop Canvas | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app" src="https://github.com/user-attachments/assets/c879f06a-10fc-45fe-bf71-7e6924db95b5" /> |
+| Tablet Canvas | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app2" src="https://github.com/user-attachments/assets/306ae850-9b52-4fc0-b0e3-6adb7435a6fa" /> |
+| Phone Canvas | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app3" src="https://github.com/user-attachments/assets/149a6940-3aa1-40b9-a6dd-6b0eb2fff7c4" /> |
+| Dark Mode | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app5" src="https://github.com/user-attachments/assets/62a5a185-3843-4793-98a3-47a24e43a14d" /> |
+| User Guide | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app6" src="https://github.com/user-attachments/assets/2bce3106-0c41-4333-a0ad-d369e602337d" /> |
 
 ## Lighthouse audit
 
