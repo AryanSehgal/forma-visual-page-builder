@@ -768,8 +768,9 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                     />
                   </div>
                   {selectedBlock.content.showCta !== false && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
-                      <div>
+                    <div className="space-y-3 pt-1">
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
                         <label className="text-[10px] text-gray-500 block mb-0.5">CTA Label</label>
                         <input
                           type="text"
@@ -778,7 +779,7 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                           className="w-full px-2 py-1 text-xs rounded border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         />
                       </div>
-                      <div>
+                        <div>
                         <label className="text-[10px] text-gray-500 block mb-0.5">Variant</label>
                         <select
                           value={selectedBlock.content.ctaVariant || 'primary'}
@@ -789,16 +790,17 @@ export const RightSidebar: React.FC<RightSidebarProps> = ({
                           <option value="secondary">Secondary</option>
                           <option value="outline">Outline</option>
                         </select>
+                        </div>
                       </div>
-                    </div>
 
-                    <ButtonActionEditor
+                      <ButtonActionEditor
                       label="Navbar CTA Action"
                       action={selectedBlock.content.ctaAction}
                       onChange={(act) => updateContent('ctaAction', act)}
                       availableBlocks={(allBlocks || []).filter((b) => b.id !== selectedBlock.id)}
                       defaultUrl="#features"
-                    />
+                      />
+                    </div>
                   )}
                 </div>
 

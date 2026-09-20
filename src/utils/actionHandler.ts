@@ -27,7 +27,11 @@ export function handleButtonAction(
 
   switch (action.type) {
     case 'url': {
-      const url = action.url || fallbackUrl || '#';
+      const url = getSafeUrl(action.url || fallbackUrl || '#');
+      if (!url) {
+        showToast('Please enter a valid website URL or page anchor.');
+        return;
+      }
       if (url.startsWith('#')) {
         const elem = document.querySelector(url);
         if (elem) {
@@ -86,8 +90,12 @@ export function handleButtonAction(
     }
 
     case 'download': {
-      const downloadUrl = action.downloadUrl || '#';
+      const downloadUrl = getSafeUrl(action.downloadUrl || '');
       const fileName = action.downloadFileName || 'download';
+      if (!downloadUrl) {
+        showToast('Please add a valid file URL before downloading.');
+        return;
+      }
       const a = document.createElement('a');
       a.href = downloadUrl;
       a.download = fileName;
@@ -98,5 +106,22 @@ export function handleButtonAction(
       showToast(`Downloading ${fileName}...`);
       break;
     }
+  }
+}
+
+function getSafeUrl(value: string): string | null {
+  const url = value.trim();
+  if (!url) return null;
+
+  // Support page anchors and relative asset paths as well as normal web URLs.
+  if (url.startsWith('#') || url.startsWith('/') || url.startsWith('./') || url.startsWith('../')) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url, window.location.origin);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? url : null;
+  } catch {
+    return null;
   }
 }

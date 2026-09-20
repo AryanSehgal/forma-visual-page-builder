@@ -1,6 +1,13 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { BlockData, ViewportMode, PageTheme, BlockType, ButtonAction } from '../types';
 import { BlockRenderer } from './blocks/BlockRenderer';
+import { ActionModal } from './ActionModal';
+import { ActionToastContainer } from './ActionToastContainer';
+import {
+  ActionModalState,
+  ActionToastState,
+  handleButtonAction,
+} from '../utils/actionHandler';
 import {
   ChevronUp,
   ChevronDown,
@@ -51,6 +58,26 @@ export const Canvas: React.FC<CanvasProps> = ({
   const [containerWidth, setContainerWidth] = useState<number>(1200);
   const [artboardHeight, setArtboardHeight] = useState<number>(750);
   const [zoomMode, setZoomMode] = useState<'fit' | number>('fit');
+  const [actionModal, setActionModal] = useState<ActionModalState | null>(null);
+  const [toasts, setToasts] = useState<ActionToastState[]>([]);
+
+  // Actions belong to the page being designed, not to the builder chrome. Keeping
+  // this handler at canvas level lets every Forma UI button share the same preview
+  // behaviour while the inspector stores its configuration on the relevant block.
+  const triggerAction = useCallback((action?: ButtonAction, fallbackUrl?: string) => {
+    handleButtonAction(
+      action,
+      fallbackUrl,
+      setActionModal,
+      (message) => {
+        const id = Date.now() + Math.floor(Math.random() * 1000);
+        setToasts((current) => [...current, { id, message }]);
+        window.setTimeout(() => {
+          setToasts((current) => current.filter((toast) => toast.id !== id));
+        }, 4000);
+      }
+    );
+  }, []);
 
   // Monitor canvas container dimensions
   useEffect(() => {
@@ -100,8 +127,9 @@ export const Canvas: React.FC<CanvasProps> = ({
   const isZoomedOut = effectiveScale < 0.99;
 
   return (
-    <main
-      ref={containerRef}
+    <>
+      <main
+        ref={containerRef}
       onClick={(e) => {
         // Deselect if clicking directly on empty workspace canvas
         if (e.target === e.currentTarget) {
@@ -109,7 +137,7 @@ export const Canvas: React.FC<CanvasProps> = ({
         }
       }}
       className="flex-1 w-full overflow-y-auto overflow-x-auto p-3 sm:p-5 md:p-6 pb-28 lg:pb-8 flex flex-col items-center justify-start canvas-checkerboard bg-gray-100/90 dark:bg-[#12141a] select-none relative"
-    >
+      >
       {/* Top Canvas Bar: Viewport Details + Responsive Zoom Controls */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3 text-xs text-gray-500 dark:text-gray-400 font-mono w-full max-w-[1240px] px-1">
         <div className="flex items-center gap-2">
@@ -270,7 +298,14 @@ export const Canvas: React.FC<CanvasProps> = ({
           )}
         </div>
       </div>
-    </main>
+      </main>
+
+      <ActionModal modal={actionModal} onClose={() => setActionModal(null)} />
+      <ActionToastContainer
+        toasts={toasts}
+        onDismiss={(id) => setToasts((current) => current.filter((toast) => toast.id !== id))}
+      />
+    </>
   );
 
   function renderCanvasContent() {
@@ -373,6 +408,8 @@ export const Canvas: React.FC<CanvasProps> = ({
           return (
             <div
               key={block.id}
+              id={`block-${block.id}`}
+              data-block-id={block.id}
               className={`relative transition-all ${
                 !isPreviewMode && isSelected
                   ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-transparent shadow-sm'
@@ -386,6 +423,7 @@ export const Canvas: React.FC<CanvasProps> = ({
                 theme={theme}
                 isSelected={!isPreviewMode && isSelected}
                 isInteractivePreview={isPreviewMode}
+                onTriggerAction={triggerAction}
               />
             </div>
           );

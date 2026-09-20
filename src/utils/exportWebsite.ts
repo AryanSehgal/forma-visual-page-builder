@@ -1,5 +1,5 @@
 import JSZip from 'jszip';
-import { BlockData, PageTheme } from '../types';
+import { BlockData, ButtonAction, PageTheme } from '../types';
 
 export function generateHtml(blocks: BlockData[], theme: PageTheme): string {
   const renderedBlocksHtml = blocks
@@ -274,6 +274,94 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // The builder serializes each configured action onto the exported control.
+  // Keeping the runtime dependency-free makes the generated site deployable as-is.
+  function showToast(message) {
+    const toast = document.createElement('div');
+    toast.textContent = message;
+    toast.setAttribute('role', 'status');
+    toast.style.cssText = 'position:fixed;right:1.5rem;bottom:1.5rem;z-index:9999;max-width:22rem;padding:.8rem 1rem;border-radius:.75rem;background:#111827;color:#fff;box-shadow:0 12px 28px rgba(0,0,0,.22);font:500 .875rem/1.4 system-ui,sans-serif;';
+    document.body.appendChild(toast);
+    window.setTimeout(() => toast.remove(), 4000);
+  }
+
+  function showModal(action) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:1rem;background:rgba(15,23,42,.55);';
+    const dialog = document.createElement('section');
+    dialog.setAttribute('role', 'dialog');
+    dialog.setAttribute('aria-modal', 'true');
+    dialog.style.cssText = 'width:min(100%,30rem);padding:1.5rem;border-radius:1rem;background:#fff;color:#111827;box-shadow:0 24px 48px rgba(0,0,0,.25);font-family:var(--f-font);';
+    const title = document.createElement('h2');
+    title.textContent = action.modalTitle || 'Action triggered';
+    title.style.cssText = 'margin:0 0 .75rem;font-size:1.25rem;line-height:1.3;';
+    const message = document.createElement('p');
+    message.textContent = action.modalMessage || 'You clicked an interactive button.';
+    message.style.cssText = 'margin:0 0 1.25rem;white-space:pre-line;color:#475569;';
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.textContent = action.modalButtonText || 'Got it';
+    close.className = 'f-button f-button-primary f-button-md';
+    close.addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', event => { if (event.target === overlay) overlay.remove(); });
+    dialog.append(title, message, close);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    close.focus();
+  }
+
+  function runAction(action) {
+    switch (action.type) {
+      case 'url': {
+        const url = action.url || '#';
+        if (url.startsWith('#')) {
+          const target = document.querySelector(url);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        } else if (action.target === '_self') {
+          window.location.assign(url);
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
+        break;
+      }
+      case 'scroll': {
+        const target = action.targetBlockId && document.getElementById(action.targetBlockId);
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        else showToast('Select a section for this button action.');
+        break;
+      }
+      case 'modal': showModal(action); break;
+      case 'toast': showToast(action.toastMessage || 'Button clicked successfully!'); break;
+      case 'email': {
+        const subject = encodeURIComponent(action.emailSubject || 'Inquiry');
+        window.location.href = 'mailto:' + (action.url || '') + '?subject=' + subject;
+        break;
+      }
+      case 'download': {
+        if (!action.downloadUrl) { showToast('Add a file URL before downloading.'); break; }
+        const link = document.createElement('a');
+        link.href = action.downloadUrl;
+        link.download = action.downloadFileName || 'download';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        break;
+      }
+    }
+  }
+
+  document.querySelectorAll('[data-forma-action]').forEach(control => {
+    control.addEventListener('click', event => {
+      try {
+        const action = JSON.parse(control.getAttribute('data-forma-action'));
+        event.preventDefault();
+        runAction(action);
+      } catch (_) {
+        showToast('This button action could not be read.');
+      }
+    });
+  });
 });
 `;
 }
@@ -425,7 +513,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
   switch (block.type) {
     case 'navbar':
       return `  <!-- Navbar -->
-  <header class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <header id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
       <a href="#" style="font-size: 1.25rem; font-weight: 800; color: inherit; text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
         <span style="display: inline-block; width: 10px; height: 10px; border-radius: 9999px; background-color: var(--f-accent);"></span>
@@ -440,7 +528,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
           .join('\n        ')}
         ${
           block.content.showCta
-            ? `<a href="#cta" class="f-button f-button-primary f-button-md">${escapeHtml(
+            ? `<a href="${escapeHtml(getActionHref(block.content.ctaAction, '#'))}" ${getActionAttributes(block.content.ctaAction)} class="f-button f-button-primary f-button-md">${escapeHtml(
                 block.content.ctaLabel
               )}</a>`
             : ''
@@ -451,7 +539,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'heading':
       return `  <!-- Hero / Heading Block -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; text-align: ${block.styles.desktop.textAlign};">
       ${
         block.content.showBadge
@@ -469,12 +557,12 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
       <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: ${
         block.styles.desktop.textAlign === 'center' ? 'center' : 'flex-start'
       };">
-        <a href="#action" class="f-button f-button-primary f-button-lg">${escapeHtml(
+        <a href="${escapeHtml(getActionHref(block.content.primaryAction, '#'))}" ${getActionAttributes(block.content.primaryAction)} class="f-button f-button-primary f-button-lg">${escapeHtml(
           block.content.primaryCtaText
         )}</a>
         ${
           block.content.showSecondaryCta
-            ? `<a href="#more" class="f-button f-button-outline f-button-lg">${escapeHtml(
+            ? `<a href="${escapeHtml(getActionHref(block.content.secondaryAction, '#'))}" ${getActionAttributes(block.content.secondaryAction)} class="f-button f-button-outline f-button-lg">${escapeHtml(
                 block.content.secondaryCtaText
               )}</a>`
             : ''
@@ -485,7 +573,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'paragraph':
       return `  <!-- Rich Text Block -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; text-align: ${block.styles.desktop.textAlign};">
       <h2 style="font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem;">${escapeHtml(block.content.headline)}</h2>
       <p style="font-size: 1.1rem; line-height: 1.7; opacity: 0.85;">${escapeHtml(block.content.body)}</p>
@@ -494,7 +582,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'image':
       return `  <!-- Image Block -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; text-align: ${block.styles.desktop.textAlign};">
       <div style="border-radius: ${block.content.borderRadius || '16px'}; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.08); border: 1px solid var(--f-border);">
         <img src="${escapeHtml(block.content.imageUrl)}" alt="${escapeHtml(
@@ -515,9 +603,9 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'button':
       return `  <!-- Button Block -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; text-align: ${block.styles.desktop.textAlign};">
-      <a href="${escapeHtml(block.content.linkUrl || '#')}" class="f-button f-button-${
+      <a href="${escapeHtml(getActionHref(block.content.action, block.content.linkUrl || '#'))}" ${getActionAttributes(block.content.action, block.content.linkUrl)} class="f-button f-button-${
         block.content.variant || 'primary'
       } f-button-${block.content.size || 'lg'}">
         ${escapeHtml(block.content.buttonText)}
@@ -534,7 +622,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'testimonial':
       return `  <!-- Testimonial Section -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto;">
       <div class="f-card" style="text-align: center;">
         <div style="display: flex; justify-content: center; gap: 4px; color: #f59e0b; margin-bottom: 1rem;">
@@ -558,7 +646,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'features':
       return `  <!-- Features Grid -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 3rem;">
         <h2 style="font-size: 2.25rem; font-weight: 800; margin-bottom: 0.75rem;">${escapeHtml(
@@ -587,7 +675,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'cta':
       return `  <!-- Call to Action Banner -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; text-align: center; padding: 2rem;">
       <div style="margin-bottom: 1rem;"><span class="f-badge">${escapeHtml(
         block.content.badge || 'Get Started'
@@ -598,11 +686,11 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
       <p style="font-size: 1.1rem; opacity: 0.85; max-width: 34rem; margin: 0 auto 2rem auto;">${escapeHtml(
         block.content.description
       )}</p>
-      <form style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; max-width: 28rem; margin: 0 auto;" onsubmit="event.preventDefault(); alert('Thank you for subscribing!');">
+      <form style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; max-width: 28rem; margin: 0 auto;" onsubmit="event.preventDefault();">
         <input type="email" placeholder="${escapeHtml(
           block.content.inputPlaceholder || 'Enter your email...'
         )}" required style="flex: 1; min-width: 200px; padding: 0.75rem 1rem; border-radius: var(--f-radius); border: 1px solid var(--f-border); font-size: 0.95rem;" />
-        <button type="submit" class="f-button f-button-primary f-button-lg">${escapeHtml(
+        <button type="button" ${getActionAttributes(block.content.buttonAction)} class="f-button f-button-primary f-button-lg">${escapeHtml(
           block.content.buttonText || 'Subscribe'
         )}</button>
       </form>
@@ -611,7 +699,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'accordion':
       return `  <!-- Accordion FAQ -->
-  <section class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <section id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 2rem;">
         <h2 style="font-size: 2rem; font-weight: 800;">${escapeHtml(block.content.title)}</h2>
@@ -638,7 +726,7 @@ function renderBlockToHtml(block: BlockData, theme: PageTheme): string {
 
     case 'footer':
       return `  <!-- Footer -->
-  <footer class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
+  <footer id="${escapeHtml(block.id)}" class="f-block f-block-${block.id}" style="${inlineWrapperStyle}">
     <div style="max-width: ${maxW}; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1.5rem; text-align: center;">
       <div>
         <div style="font-weight: 800; font-size: 1.1rem; color: var(--f-fg);">${escapeHtml(
@@ -689,6 +777,31 @@ export async function downloadZip(blocks: BlockData[], theme: PageTheme): Promis
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+function getConfiguredAction(value: unknown, fallbackUrl?: string): ButtonAction | undefined {
+  if (value && typeof value === 'object' && 'type' in value) {
+    return value as ButtonAction;
+  }
+
+  return fallbackUrl
+    ? { type: 'url', url: fallbackUrl, target: '_blank' }
+    : undefined;
+}
+
+function getActionAttributes(value: unknown, fallbackUrl?: string): string {
+  const action = getConfiguredAction(value, fallbackUrl);
+  return action ? `data-forma-action="${escapeHtml(JSON.stringify(action))}"` : '';
+}
+
+function getActionHref(value: unknown, fallbackUrl: string): string {
+  const action = getConfiguredAction(value, fallbackUrl);
+  if (!action) return '#';
+
+  if (action.type === 'url') return action.url || fallbackUrl || '#';
+  if (action.type === 'email') return `mailto:${action.url || ''}`;
+  if (action.type === 'download') return action.downloadUrl || '#';
+  return '#';
 }
 
 function escapeHtml(str: string): string {
