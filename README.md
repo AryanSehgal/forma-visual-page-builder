@@ -16,6 +16,7 @@ Rather than attempting to reproduce every feature in a large site builder, this 
 ## Screenshots
 
 | **Title** | **Screenshot** |
+| -------- | -------- |
 | Dektop Canvas | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app" src="https://github.com/user-attachments/assets/c879f06a-10fc-45fe-bf71-7e6924db95b5" /> |
 | Tablet Canvas | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app2" src="https://github.com/user-attachments/assets/306ae850-9b52-4fc0-b0e3-6adb7435a6fa" /> |
 | Phone Canvas | <img width="2522" height="1544" alt="forma-visual-page-builder vercel app3" src="https://github.com/user-attachments/assets/149a6940-3aa1-40b9-a6dd-6b0eb2fff7c4" /> |
