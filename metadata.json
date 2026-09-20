@@ -1,0 +1,6 @@
+{
+  "name": "Forma Visual Page Builder",
+  "description": "A responsive visual website builder powered by the @aryan_sehgal/forma-ui design system, featuring block arrangement, mobile layout tuning, and standalone website file export.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
