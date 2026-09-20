@@ -37,20 +37,12 @@ After placing the files at those paths, replace this placeholder with the follow
 
 The deployed builder was audited with Lighthouse against [forma-visual-page-builder.vercel.app](https://forma-visual-page-builder.vercel.app/). The reported results provide a strong baseline for a client-side visual editing experience.
 
-| Category | Score |
-| --- | ---: |
-| Performance | **99** |
-| Accessibility | **95** |
-| Best Practices | **100** |
-| SEO | **100** |
+<img width="586" height="571" alt="image" src="https://github.com/user-attachments/assets/6312737d-353c-410d-854e-133d8e7de9bf" />
 
 > Lighthouse scores are a point-in-time measurement and can vary by device profile, network conditions, browser version, and deployed asset versions.
 
-**Detailed report placeholder:** add the exported PDF at `docs/lighthouse/forma-visual-page-builder-lighthouse.pdf`, then link it here:
+**Detailed report placeholder:** add the exported PDF at [Lighthouse Report of Forma Builder.pdf](https://github.com/user-attachments/files/32434891/Lighthouse.Report.of.Forma.Builder.pdf)
 
-```md
-[View the detailed Lighthouse report](./docs/lighthouse/forma-visual-page-builder-lighthouse.pdf)
-```
 
 ## What you can build
 
@@ -247,12 +239,6 @@ vercel --prod
 Created by [Aryan Sehgal](https://github.com/AryanSehgal).
 
 Built as a practical showcase for [Forma UI](https://github.com/AryanSehgal/forma-design-system), a composable React component library with TypeScript declarations, semantic CSS tokens, and accessible interaction primitives.
-
-
-
-
-
-[Lighthouse Report of Forma Builder.pdf](https://github.com/user-attachments/files/32434891/Lighthouse.Report.of.Forma.Builder.pdf)
 
 
 
