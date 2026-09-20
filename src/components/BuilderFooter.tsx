@@ -26,10 +26,6 @@ export const BuilderFooter: React.FC = () => {
 
       {/* Right / Bottom on mobile: Creator attribution to Aryan Sehgal with photo */}
       <div className="flex items-center justify-center gap-1.5 text-[11px] sm:text-xs shrink-0">
-        <span className="hidden lg:inline text-gray-400 dark:text-gray-500">
-          (built by the creator of this builder)
-        </span>
-        <span className="hidden lg:inline text-gray-300 dark:text-gray-700">•</span>
         <span className="text-gray-500 dark:text-[#a3aaba]">Created by</span>
         <a
           href={ARYAN_PROFILE.githubUrl}
